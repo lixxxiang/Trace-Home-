@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">trace3</string>
+    <string name="hello">你好 定损员</string>
+    <string name="tips">请在上班时间开启按钮，以保证您的工时</string>
+    <string name="start">开始上班</string>
+    <string name="start_already">已开始</string>
+    <string name="tips2">请你保持软件运行，以保证您的工时</string>
+    <string name="end">下班</string>
+</resources>
