@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     tools:context="com.example.lixiang.trace3.view.MainActivity">
 
     <com.baidu.mapapi.map.MapView
@@ -10,6 +12,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
     </com.baidu.mapapi.map.MapView>
+    <!--<RelativeLayout-->
+        <!--android:id="@+id/rl"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="6dp"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_marginBottom="231dp"-->
+        <!--android:background="@color/colorPrimary"/>-->
+    <!--<RelativeLayout-->
+        <!--android:layout_below="@+id/rl"-->
+        <!--android:background="#FFFF00"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="460dp">-->
+
+    <!--</RelativeLayout>-->
     <RelativeLayout
         android:id="@+id/start_rl"
         android:clickable="true"
@@ -70,20 +86,24 @@
                 android:textColor="#FFFFFF" />
         </RelativeLayout>
     </RelativeLayout>
+
+
     <RelativeLayout
         android:clickable="true"
         android:id="@+id/end_rl"
-        android:visibility="invisible"
         android:background="#FFFFFF"
+        android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="230dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="6dp"
+        android:layout_below="@+id/start_rl"
         android:layout_marginLeft="10dp"
+        android:layout_marginBottom="-230dp"
         android:elevation="4dp"
         android:layout_marginRight="10dp"
         android:layout_centerHorizontal="true"
         android:focusable="true">
+        <!--android:layout_alignParentBottom="true"
+        android:layout_marginBottom="6dp"-->
         <android.support.v7.widget.AppCompatTextView
             android:id="@+id/start_already"
             android:layout_width="wrap_content"

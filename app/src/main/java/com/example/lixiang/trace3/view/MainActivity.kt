@@ -14,9 +14,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
-import android.support.v7.app.ActionBar
 import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationSet
+import android.view.animation.TranslateAnimation
 import android.widget.ImageView
+import android.widget.RelativeLayout
 import com.baidu.trace.LBSTraceClient
 import com.baidu.trace.Trace
 import com.baidu.trace.model.OnTraceListener
@@ -35,6 +38,7 @@ import com.baidu.mapapi.map.*
 import com.baidu.mapapi.model.LatLng
 import com.blankj.utilcode.util.TimeUtils
 import com.blankj.utilcode.util.Utils
+import com.example.emall_core.util.dimen.DimenUtil
 import com.example.lixiang.trace3.util.SpannableBuilder
 import com.githang.statusbar.StatusBarCompat
 import java.util.*
@@ -64,6 +68,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private var timeDiff = ""
     var handler = Handler()
     var handler2 = Handler()
+    var handler3 = Handler()
+    var handler4 = Handler()
+
     var runnable: Runnable = object : Runnable {
         override fun run() {
             // TODO Auto-generated method stub
@@ -86,21 +93,12 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         SDKInitializer.initialize(applicationContext)
         setContentView(R.layout.activity_main)
         StatusBarCompat.setStatusBarColor(this, Color.WHITE, true)
-//        setSupportActionBar(toolbar)
-//        val actionBar = supportActionBar
-//        if (actionBar != null){
-//            actionBar.setDisplayHomeAsUpEnabled(true)
-//            actionBar.setDisplayShowTitleEnabled(false)
-//        }
         Utils.init(application)
         timeString = getToday() + " 08:00:00"
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         handlePermisson()
         initMap()
-
         start_rl.setOnClickListener {
-            start_rl.visibility = View.INVISIBLE
-            end_rl.visibility = View.VISIBLE
             clickTime = TimeUtils.millis2String(System.currentTimeMillis())
             handler2.postDelayed(runnable2, 0)
             val historyTrackRequest = HistoryTrackRequest(tag, serviceId, entityName)
@@ -110,24 +108,81 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             historyTrackRequest.endTime = endTime
 
             val mTrackListener = object : OnTrackListener() {
-                // 历史轨迹回调
                 override fun onHistoryTrackCallback(response: HistoryTrackResponse?) {
                     Logger().d(response!!)
                 }
             }
 
             mTraceClient.queryHistoryTrack(historyTrackRequest, mTrackListener)
+
+            start_rl.startAnimation(slideDown(start_rl))
+            handler3.postDelayed(
+                    {
+                        end_rl.startAnimation(slideUp(end_rl))
+                    }, 500)
         }
 
         end_rl.setOnClickListener {
-            start_rl.visibility = View.VISIBLE
-            end_rl.visibility = View.INVISIBLE
             handler2.removeCallbacks(runnable2)
             mTraceClient.stopTrace(mTrace, mTraceListener)
             mTraceClient.stopGather(mTraceListener)
+            end_rl.startAnimation(slideDown(end_rl))
+            handler3.postDelayed(
+                    {
+                        start_rl.startAnimation(slideUp(start_rl))
+                    }, 500)
         }
 
         handler.postDelayed(runnable, 0)
+    }
+
+    private fun slideDown(rl: RelativeLayout): AnimationSet {
+        val animationSet = AnimationSet(true)
+        val translateAnimation = TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 1.0f)
+        translateAnimation.duration = 500
+        translateAnimation.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation) {}
+
+            override fun onAnimationRepeat(animation: Animation) {}
+
+            override fun onAnimationEnd(animation: Animation) {
+                val brParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, DimenUtil().dip2px(applicationContext, 230F))
+                brParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                brParams.setMargins(DimenUtil().dip2px(applicationContext, 10F), 0, DimenUtil().dip2px(applicationContext, 10F), DimenUtil().dip2px(applicationContext, -230F))
+                rl.layoutParams = brParams
+            }
+        })
+        animationSet.addAnimation(translateAnimation)
+        return animationSet
+    }
+
+    private fun slideUp(rl: RelativeLayout): AnimationSet {
+        val animationSet = AnimationSet(true)
+        val translateAnimation = TranslateAnimation(Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.0f,
+                Animation.RELATIVE_TO_SELF, -1.0f)
+        translateAnimation.duration = 500
+        translateAnimation.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation) {}
+
+            override fun onAnimationRepeat(animation: Animation) {}
+
+            override fun onAnimationEnd(animation: Animation) {
+                handler4.postDelayed(
+                        {
+                            val brParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, DimenUtil().dip2px(applicationContext, 230F))
+                            brParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                            brParams.setMargins(DimenUtil().dip2px(applicationContext, 10F), 0, DimenUtil().dip2px(applicationContext, 10F), DimenUtil().dip2px(applicationContext, 6F))
+                            rl.layoutParams = brParams
+                        }, 10)
+            }
+        })
+        animationSet.addAnimation(translateAnimation)
+        return animationSet
     }
 
     private fun getTime(ts: String): String {
