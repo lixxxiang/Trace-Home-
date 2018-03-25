@@ -3,7 +3,10 @@ package com.example.lixiang.trace3.view
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Matrix
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -36,6 +39,7 @@ import com.baidu.location.*
 import com.baidu.mapapi.SDKInitializer
 import com.baidu.mapapi.map.*
 import com.baidu.mapapi.model.LatLng
+import com.blankj.utilcode.util.ImageUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.blankj.utilcode.util.Utils
 import com.example.emall_core.util.dimen.DimenUtil
@@ -247,7 +251,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         mMapView = findViewById<MapView>(R.id.mMapView)
         mBaiduMap = mMapView!!.map
         mBaiduMap!!.isMyLocationEnabled = true
-        val mCurrentMarker = BitmapDescriptorFactory.fromResource(R.drawable.position)
+//        val mCurrentMarker = BitmapDescriptorFactory.fromResource(R.drawable.position)
+        val bmp = BitmapFactory.decodeResource(resources, R.drawable.position)
+        val bmp2 = rotateBitmap(bmp, 180F)
+        val marker = resizeBitmap(bmp2!!, DimenUtil().dip2px(applicationContext, 18F), DimenUtil().dip2px(applicationContext, 36F))
+        val mCurrentMarker = BitmapDescriptorFactory.fromBitmap(marker)
         mBaiduMap!!.setMyLocationConfigeration(MyLocationConfiguration(mCurrentMode, true, mCurrentMarker))
         val builder = MapStatus.Builder()
         builder.overlook(0f)
@@ -275,6 +283,33 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         mLocClient!!.start()
     }
 
+    fun resizeBitmap(bitmap: Bitmap, w:Int, h:Int) : Bitmap{
+        var width = bitmap.width
+        var height = bitmap.height
+        var scaleWidth = w/width.toFloat()
+        var scaleHeight = h/height.toFloat()
+        var matrix = Matrix()
+        matrix.postScale(scaleWidth, scaleHeight)
+        var resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true)
+        return resizedBitmap
+    }
+
+    private fun rotateBitmap(origin: Bitmap?, alpha: Float): Bitmap? {
+        if (origin == null) {
+            return null
+        }
+        val width = origin.width
+        val height = origin.height
+        val matrix = Matrix()
+        matrix.setRotate(alpha)
+        // 围绕原地进行旋转
+        val newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false)
+        if (newBM == origin) {
+            return newBM
+        }
+        origin.recycle()
+        return newBM
+    }
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
 
     }
@@ -418,6 +453,5 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         mSensorManager!!.unregisterListener(this)
         super.onDestroy()
     }
-
 
 }
