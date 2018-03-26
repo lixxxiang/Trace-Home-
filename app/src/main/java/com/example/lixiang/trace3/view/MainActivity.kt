@@ -19,6 +19,7 @@ import android.os.Handler
 import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.Animation
@@ -47,6 +48,7 @@ import com.example.emall_core.util.dimen.DimenUtil
 import com.example.lixiang.trace3.util.SpannableBuilder
 import com.githang.statusbar.StatusBarCompat
 import kotlinx.android.synthetic.main.dialog_view.*
+import java.lang.System.exit
 import java.util.*
 
 
@@ -78,6 +80,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     var handler4 = Handler()
     var inputName = false
     var name = ""
+    private var exitTime: Long = 0
     var runnable: Runnable = object : Runnable {
         override fun run() {
             // TODO Auto-generated method stub
@@ -498,4 +501,22 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         super.onDestroy()
     }
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            exit()
+            return false
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    fun exit() {
+        if ((System.currentTimeMillis() - exitTime) > 2000) {
+            Toast.makeText(applicationContext, "再按一次退出程序",
+                    Toast.LENGTH_SHORT).show()
+            exitTime = System.currentTimeMillis()
+        } else {
+            finish()
+            System.exit(0)
+        }
+    }
 }
