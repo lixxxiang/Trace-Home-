@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">trace3</string>
+    <string name="app_name">PICC车管云</string>
     <string name="hello">你好 定损员</string>
     <string name="tips">请在上班时间开启按钮，以保证您的工时</string>
     <string name="start">开始上班</string>
