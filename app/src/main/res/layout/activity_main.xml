@@ -26,6 +26,15 @@
         <!--android:layout_height="460dp">-->
 
     <!--</RelativeLayout>-->
+
+    <android.support.v7.widget.AppCompatButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TAP TO INPUT YOUR NAME"
+        android:layout_marginTop="70dp"
+        android:layout_marginLeft="10dp"
+        android:id="@+id/btn"
+        />
     <RelativeLayout
         android:id="@+id/start_rl"
         android:clickable="true"

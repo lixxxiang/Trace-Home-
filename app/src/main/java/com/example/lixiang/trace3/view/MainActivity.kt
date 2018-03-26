@@ -2,6 +2,7 @@ package com.example.lixiang.trace3.view
 
 import android.Manifest
 import android.content.Context
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -17,12 +18,13 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
+import android.support.v7.app.AlertDialog
+import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationSet
 import android.view.animation.TranslateAnimation
-import android.widget.ImageView
-import android.widget.RelativeLayout
+import android.widget.*
 import com.baidu.trace.LBSTraceClient
 import com.baidu.trace.Trace
 import com.baidu.trace.model.OnTraceListener
@@ -34,7 +36,6 @@ import com.example.lixiang.trace3.R
 import com.example.lixiang.trace3.util.DeviceUtils
 import com.example.lixiang.trace3.util.Logger
 import kotlinx.android.synthetic.main.activity_main.*
-import android.widget.ZoomControls
 import com.baidu.location.*
 import com.baidu.mapapi.SDKInitializer
 import com.baidu.mapapi.map.*
@@ -45,6 +46,7 @@ import com.blankj.utilcode.util.Utils
 import com.example.emall_core.util.dimen.DimenUtil
 import com.example.lixiang.trace3.util.SpannableBuilder
 import com.githang.statusbar.StatusBarCompat
+import kotlinx.android.synthetic.main.dialog_view.*
 import java.util.*
 
 
@@ -74,7 +76,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     var handler2 = Handler()
     var handler3 = Handler()
     var handler4 = Handler()
-
+    var inputName = false
+    var name = ""
     var runnable: Runnable = object : Runnable {
         override fun run() {
             // TODO Auto-generated method stub
@@ -103,27 +106,42 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         handlePermisson()
         initMap()
         start_rl.setOnClickListener {
-            clickTime = TimeUtils.millis2String(System.currentTimeMillis())
-            handler2.postDelayed(runnable2, 0)
-            val historyTrackRequest = HistoryTrackRequest(tag, serviceId, entityName)
-            val startTime = System.currentTimeMillis() / 1000 - 12 * 60 * 60
-            val endTime = System.currentTimeMillis() / 1000
-            historyTrackRequest.startTime = startTime
-            historyTrackRequest.endTime = endTime
+            if (!inputName){
+                Toast.makeText(this,"input name first", Toast.LENGTH_LONG).show()
+            }else{
+                val gatherInterval = 5
+                val packInterval = 10
+//                entityName = DeviceUtils.getUniqueId(this)
+                entityName = name
+                Logger().d(entityName)
+                mTrace = Trace(serviceId, entityName, isNeedObjectStorage)
+                mTraceClient = LBSTraceClient(applicationContext)
+                mTraceClient.setInterval(gatherInterval, packInterval)
+                mTraceClient.startTrace(mTrace, mTraceListener)
+                mTraceClient.startGather(mTraceListener)
+                clickTime = TimeUtils.millis2String(System.currentTimeMillis())
+                handler2.postDelayed(runnable2, 0)
+                val historyTrackRequest = HistoryTrackRequest(tag, serviceId, entityName)
+                val startTime = System.currentTimeMillis() / 1000 - 12 * 60 * 60
+                val endTime = System.currentTimeMillis() / 1000
+                historyTrackRequest.startTime = startTime
+                historyTrackRequest.endTime = endTime
 
-            val mTrackListener = object : OnTrackListener() {
-                override fun onHistoryTrackCallback(response: HistoryTrackResponse?) {
-                    Logger().d(response!!)
+                val mTrackListener = object : OnTrackListener() {
+                    override fun onHistoryTrackCallback(response: HistoryTrackResponse?) {
+//                    Logger().d(response!!)
+                    }
                 }
+
+                mTraceClient.queryHistoryTrack(historyTrackRequest, mTrackListener)
+
+                start_rl.startAnimation(slideDown(start_rl))
+                handler3.postDelayed(
+                        {
+                            end_rl.startAnimation(slideUp(end_rl))
+                        }, 500)
             }
 
-            mTraceClient.queryHistoryTrack(historyTrackRequest, mTrackListener)
-
-            start_rl.startAnimation(slideDown(start_rl))
-            handler3.postDelayed(
-                    {
-                        end_rl.startAnimation(slideUp(end_rl))
-                    }, 500)
         }
 
         end_rl.setOnClickListener {
@@ -138,6 +156,26 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         }
 
         handler.postDelayed(runnable, 0)
+
+        btn.setOnClickListener {
+            showDialog()
+        }
+    }
+
+    fun showDialog() {
+        val customizeDialog = AlertDialog.Builder(this@MainActivity)
+        var dialogView: View = LayoutInflater.from(this).inflate(R.layout.dialog_view, null)
+        customizeDialog.setTitle("YOUR NAME IS")
+        customizeDialog.setView(dialogView)
+        customizeDialog.setPositiveButton("ENTER"
+        ) { dialog, which ->
+            // 获取EditView中的输入内容
+            var et = dialogView.findViewById<EditText>(R.id.edit_text)
+            Logger().d(et.text.toString())
+            name = et.text.toString()
+            inputName = true
+        }
+        customizeDialog.show()
     }
 
     private fun slideDown(rl: RelativeLayout): AnimationSet {
@@ -283,11 +321,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         mLocClient!!.start()
     }
 
-    fun resizeBitmap(bitmap: Bitmap, w:Int, h:Int) : Bitmap{
+    fun resizeBitmap(bitmap: Bitmap, w: Int, h: Int): Bitmap {
         var width = bitmap.width
         var height = bitmap.height
-        var scaleWidth = w/width.toFloat()
-        var scaleHeight = h/height.toFloat()
+        var scaleWidth = w / width.toFloat()
+        var scaleHeight = h / height.toFloat()
         var matrix = Matrix()
         matrix.postScale(scaleWidth, scaleHeight)
         var resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true)
@@ -310,6 +348,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         origin.recycle()
         return newBM
     }
+
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
 
     }
@@ -323,13 +362,19 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             println(String.format("onStartTraceCallback, errorNo:%d, message:%s ", status, message))
         }
 
-        override fun onStopTraceCallback(status: Int, message: String) {}
+        override fun onStopTraceCallback(status: Int, message: String) {
+            println(String.format("onStopTraceCallback, errorNo:%d, message:%s ", status, message))
+
+        }
 
         override fun onStartGatherCallback(status: Int, message: String) {
             println(String.format("onStartGatherCallback, errorNo:%d, message:%s ", status, message))
         }
 
-        override fun onStopGatherCallback(status: Int, message: String) {}
+        override fun onStopGatherCallback(status: Int, message: String) {
+            println(String.format("onStopGatherCallback, errorNo:%d, message:%s ", status, message))
+
+        }
 
         override fun onPushCallback(messageNo: Byte, message: PushMessage) {}
 
@@ -363,14 +408,13 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            val gatherInterval = 5
-            val packInterval = 10
-            entityName = DeviceUtils.getUniqueId(this)
-            mTrace = Trace(serviceId, entityName, isNeedObjectStorage)
-            mTraceClient = LBSTraceClient(applicationContext)
-            mTraceClient.setInterval(gatherInterval, packInterval)
-            mTraceClient.startTrace(mTrace, mTraceListener)
-            mTraceClient.startGather(mTraceListener)
+
+//            entityName = DeviceUtils.getUniqueId(this)
+//            mTrace = Trace(serviceId, entityName, isNeedObjectStorage)
+//            mTraceClient = LBSTraceClient(applicationContext)
+//            mTraceClient.setInterval(gatherInterval, packInterval)
+//            mTraceClient.startTrace(mTrace, mTraceListener)
+//            mTraceClient.startGather(mTraceListener)
 
 
         }
