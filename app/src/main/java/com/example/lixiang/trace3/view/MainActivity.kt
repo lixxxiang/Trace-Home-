@@ -3,6 +3,7 @@ package com.example.lixiang.trace3.view
 import android.Manifest
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -12,10 +13,13 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.PowerManager
+import android.provider.Settings
 import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
@@ -34,7 +38,6 @@ import com.baidu.trace.api.track.HistoryTrackRequest
 import com.baidu.trace.api.track.HistoryTrackResponse
 import com.baidu.trace.api.track.OnTrackListener
 import com.example.lixiang.trace3.R
-import com.example.lixiang.trace3.util.DeviceUtils
 import com.example.lixiang.trace3.util.Logger
 import kotlinx.android.synthetic.main.activity_main.*
 import com.baidu.location.*
@@ -45,6 +48,7 @@ import com.blankj.utilcode.util.ImageUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.blankj.utilcode.util.Utils
 import com.example.emall_core.util.dimen.DimenUtil
+import com.example.lixiang.trace3.util.DeviceUtils
 import com.example.lixiang.trace3.util.SpannableBuilder
 import com.githang.statusbar.StatusBarCompat
 import kotlinx.android.synthetic.main.dialog_view.*
@@ -80,6 +84,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     var handler4 = Handler()
     var inputName = false
     var name = ""
+    private var powerManager: PowerManager? = null
     private var exitTime: Long = 0
     var runnable: Runnable = object : Runnable {
         override fun run() {
@@ -104,18 +109,21 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         setContentView(R.layout.activity_main)
         StatusBarCompat.setStatusBarColor(this, Color.WHITE, true)
         Utils.init(application)
+        initMap()
         timeString = getToday() + " 08:00:00"
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         handlePermisson()
-        initMap()
+        powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager?
+
         start_rl.setOnClickListener {
-            if (!inputName){
-                Toast.makeText(this,"input name first", Toast.LENGTH_LONG).show()
-            }else{
+//            if (!inputName){
+//                Toast.makeText(this,"input name first", Toast.LENGTH_LONG).show()
+//            }else{
                 val gatherInterval = 5
                 val packInterval = 10
 //                entityName = DeviceUtils.getUniqueId(this)
-                entityName = name
+//                entityName = name
+                entityName = com.blankj.utilcode.util.DeviceUtils.getManufacturer() + "_" + com.blankj.utilcode.util.DeviceUtils.getModel() + "_" + DeviceUtils.getUniqueId(this)
                 Logger().d(entityName)
                 mTrace = Trace(serviceId, entityName, isNeedObjectStorage)
                 mTraceClient = LBSTraceClient(applicationContext)
@@ -143,7 +151,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         {
                             end_rl.startAnimation(slideUp(end_rl))
                         }, 500)
-            }
+//            }
 
         }
 
@@ -160,9 +168,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         handler.postDelayed(runnable, 0)
 
-        btn.setOnClickListener {
-            showDialog()
-        }
+//        btn.setOnClickListener {
+//            showDialog()
+//        }
     }
 
     fun showDialog() {
@@ -418,6 +426,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 //            mTraceClient.setInterval(gatherInterval, packInterval)
 //            mTraceClient.startTrace(mTrace, mTraceListener)
 //            mTraceClient.startGather(mTraceListener)
+            initMap()
 
 
         }
@@ -483,11 +492,27 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         super.onPause()
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onResume() {
         mMapView!!.onResume()
         super.onResume()
         mSensorManager!!.registerListener(this, mSensorManager!!.getDefaultSensor(Sensor.TYPE_ORIENTATION),
                 SensorManager.SENSOR_DELAY_UI)
+        // 在Android 6.0及以上系统，若定制手机使用到doze模式，请求将应用添加到白名单。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val packageName = application.getPackageName()
+            val isIgnoring = powerManager!!.isIgnoringBatteryOptimizations(packageName)
+            if (!isIgnoring) {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                intent.data = Uri.parse("package:" + packageName)
+                try {
+                    startActivity(intent)
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                }
+
+            }
+        }
     }
 
     override fun onDestroy() {
