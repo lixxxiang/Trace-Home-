@@ -49,6 +49,7 @@ import com.blankj.utilcode.util.TimeUtils
 import com.blankj.utilcode.util.Utils
 import com.example.emall_core.util.dimen.DimenUtil
 import com.example.lixiang.trace3.util.DeviceUtils
+import com.example.lixiang.trace3.util.SoundUtils
 import com.example.lixiang.trace3.util.SpannableBuilder
 import com.githang.statusbar.StatusBarCompat
 import kotlinx.android.synthetic.main.dialog_view.*
@@ -110,47 +111,50 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         StatusBarCompat.setStatusBarColor(this, Color.WHITE, true)
         Utils.init(application)
         initMap()
+        var soundUtils = SoundUtils(this, SoundUtils.RING_SOUND)
+        soundUtils.putSound(0, R.raw.alert)
         timeString = getToday() + " 08:00:00"
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         handlePermisson()
         powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager?
 
         start_rl.setOnClickListener {
-//            if (!inputName){
+            //            if (!inputName){
 //                Toast.makeText(this,"input name first", Toast.LENGTH_LONG).show()
 //            }else{
-                val gatherInterval = 5
-                val packInterval = 10
+            val gatherInterval = 5
+            val packInterval = 10
 //                entityName = DeviceUtils.getUniqueId(this)
 //                entityName = name
-                entityName = com.blankj.utilcode.util.DeviceUtils.getManufacturer() + "_" + com.blankj.utilcode.util.DeviceUtils.getModel() + "_" + DeviceUtils.getUniqueId(this)
-                Logger().d(entityName)
-                mTrace = Trace(serviceId, entityName, isNeedObjectStorage)
-                mTraceClient = LBSTraceClient(applicationContext)
-                mTraceClient.setInterval(gatherInterval, packInterval)
-                mTraceClient.startTrace(mTrace, mTraceListener)
-                mTraceClient.startGather(mTraceListener)
-                clickTime = TimeUtils.millis2String(System.currentTimeMillis())
-                handler2.postDelayed(runnable2, 0)
-                val historyTrackRequest = HistoryTrackRequest(tag, serviceId, entityName)
-                val startTime = System.currentTimeMillis() / 1000 - 12 * 60 * 60
-                val endTime = System.currentTimeMillis() / 1000
-                historyTrackRequest.startTime = startTime
-                historyTrackRequest.endTime = endTime
+            soundUtils.playSound(0, SoundUtils.SINGLE_PLAY);
+            entityName = com.blankj.utilcode.util.DeviceUtils.getManufacturer() + "_" + com.blankj.utilcode.util.DeviceUtils.getModel() + "_" + DeviceUtils.getUniqueId(this)
+            Logger().d(entityName)
+            mTrace = Trace(serviceId, entityName, isNeedObjectStorage)
+            mTraceClient = LBSTraceClient(applicationContext)
+            mTraceClient.setInterval(gatherInterval, packInterval)
+            mTraceClient.startTrace(mTrace, mTraceListener)
+            mTraceClient.startGather(mTraceListener)
+            clickTime = TimeUtils.millis2String(System.currentTimeMillis())
+            handler2.postDelayed(runnable2, 0)
+            val historyTrackRequest = HistoryTrackRequest(tag, serviceId, entityName)
+            val startTime = System.currentTimeMillis() / 1000 - 12 * 60 * 60
+            val endTime = System.currentTimeMillis() / 1000
+            historyTrackRequest.startTime = startTime
+            historyTrackRequest.endTime = endTime
 
-                val mTrackListener = object : OnTrackListener() {
-                    override fun onHistoryTrackCallback(response: HistoryTrackResponse?) {
+            val mTrackListener = object : OnTrackListener() {
+                override fun onHistoryTrackCallback(response: HistoryTrackResponse?) {
 //                    Logger().d(response!!)
-                    }
                 }
+            }
 
-                mTraceClient.queryHistoryTrack(historyTrackRequest, mTrackListener)
+            mTraceClient.queryHistoryTrack(historyTrackRequest, mTrackListener)
 
-                start_rl.startAnimation(slideDown(start_rl))
-                handler3.postDelayed(
-                        {
-                            end_rl.startAnimation(slideUp(end_rl))
-                        }, 500)
+            start_rl.startAnimation(slideDown(start_rl))
+            handler3.postDelayed(
+                    {
+                        end_rl.startAnimation(slideUp(end_rl))
+                    }, 500)
 //            }
 
         }
@@ -266,11 +270,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val originalTimeDifference = TimeUtils.getFitTimeSpanByNow(TimeUtils.string2Millis(ts), 4)
         val cutSecondTimeDiffIndex = originalTimeDifference.indexOf("分钟")
         timeDiff = if (cutSecondTimeDiffIndex != -1) {//有分钟
-            originalTimeDifference.substring(0, cutSecondTimeDiffIndex + 2).replace("小时", "h").replace("分钟", "min")
+            originalTimeDifference.substring(0, cutSecondTimeDiffIndex + 2).replace("小时", "h ").replace("分钟", "min")
         } else {//没有分钟
             val cutSecondTimeDiffIndex2 = originalTimeDifference.indexOf("小时")
             if (cutSecondTimeDiffIndex2 != -1) {//有小时
-                originalTimeDifference.substring(0, cutSecondTimeDiffIndex2 + 2).replace("小时", "h")
+                originalTimeDifference.substring(0, cutSecondTimeDiffIndex2 + 2).replace("小时", "h ")
             } else {//没有小时
                 "0min"
             }
