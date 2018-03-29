@@ -437,11 +437,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     }
 
     inner class MyLocationListenner : BDLocationListener {
-        var lati: Double = 0.toDouble()
-        var longi: Double = 0.toDouble()
-        var address: String = ""
-        internal lateinit var poi: List<Poi>
-
         override fun onReceiveLocation(location: BDLocation?) {
             if (location == null || mMapView == null) {
                 return
@@ -452,13 +447,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     .direction(mCurrentDirection.toFloat())
                     .latitude(location.latitude)
                     .longitude(location.longitude).build()
-            lati = location.latitude
-            longi = location.longitude
             mCurrentLat = location.latitude
             mCurrentLon = location.longitude
-            address = location.addrStr
             mCurrentAccracy = location.radius
-            poi = location.poiList
             mBaiduMap!!.setMyLocationData(locData)
             if (isFirstLoc) {
                 isFirstLoc = false
